@@ -6,6 +6,7 @@
 /**
  * Possiveis inclusoes futuras:
  * - Criar funcao para encontrar uma chave dada
+ * - Lembrar de colocar as funções auxiliares encapsuladas
  */
 
 /**
@@ -21,14 +22,13 @@ private:
 
 public:
     // construtor da arvore, inicializa uma arvore vazia
-    ArvoreDeBuscaBinaria()
+    MinhaArvoreDeBuscaBinaria()
     {
-        this->_raiz = nullptr;
         this->quantidadeChaves = 0;
     }
 
-    // destrutor que percorre toda a árvore para eliminar nodo por nodo (usar delete?)
-    virtual ~ArvoreDeBuscaBinaria()
+    // destrutor que percorre toda a árvore para eliminar nodo por nodo
+    virtual ~MinhaArvoreDeBuscaBinaria()
     {
         Nodo<T> *aux = this->_raiz;
 
@@ -46,14 +46,11 @@ public:
      */
     void deletaEmOrdem(Nodo<T> *aux)
     {
-        Nodo<T> *auxPai = aux;
-
         if (aux != nullptr)
         {
             deletaEmOrdem(aux->filhoEsquerda);
-            auxPai = aux;
+            deletaEmOrdem(aux->filhoDireita);
             delete aux;
-            deletaEmOrdem(auxPai->filhoDireita);
         }
     }
 
@@ -119,7 +116,6 @@ public:
      * @param chave chave que é raiz da (sub)arvore cuja altura queremos. Se chave é nula, retorna a altura da arvore.
      * @return Numero inteiro representando a altura da (subarvore). Se chave nao esta na arvore, retorna std::nullopt
      */
-    // o que eh esse optional?
     virtual std::optional<int> altura(T chave) const
     {
 
@@ -145,7 +141,6 @@ public:
                 aux = aux->filhoDireita;
             }
         }
-        // esse retorno ta certo?
         return std::nullopt;
     }
 
@@ -159,7 +154,7 @@ public:
         // insere na raiz
         if (this->_raiz == nullptr)
         {
-            Nodo<T> *novo = new Nodo<T>; //Esta certo ??
+            Nodo<T> *novo = new Nodo<T>;
             novo->chave = chave;
             novo->filhoEsquerda = nullptr;
             novo->filhoDireita = nullptr;
@@ -170,7 +165,7 @@ public:
         }
         // insere no restante da arvore
         // e no caso que a chave for igual uma existente?
-        // como calcular a altura?
+        // verificar qual a condição caso chave existente
         else
         {
             Nodo<T> *auxPai = this->_raiz;
@@ -182,7 +177,7 @@ public:
             {
                 aux = auxPai->filhoEsquerda;
             }
-            if (chave > auxPai->chave)
+            if (chave >= auxPai->chave)
             {
                 aux = auxPai->filhoDireita;
             }
@@ -192,7 +187,7 @@ public:
             while (aux != nullptr)
             {
                 auxPai = aux;
-                if (chave < aux->chave)
+                if (chave <= aux->chave)
                     aux = aux->filhoEsquerda;
                 if (chave > aux->chave)
                     aux = aux->filhoDireita;
@@ -227,16 +222,75 @@ public:
      */
     virtual void remover(T chave)
     {
+        if (!contem(chave))
+        {
+            return;
+        }
+        else
+        {
+            Nodo<T> *auxPai = nullptr;
+            Nodo<T> *aux = this->_raiz;
+
+            // precisa fazer o caso do nodo ser a raiz
+            // encontra qual o nodo a ser removido e seu pai
+            while (aux->chave != chave)
+            {
+                auxPai = aux;
+                if (chave < aux->chave)
+                {
+                    aux = aux->filhoEsquerda;
+                }
+                if (chave > aux->chave)
+                {
+                    aux = aux->filhoDireita;
+                }
+            }
+
+            // remocao no caso do nodo ser uma folha
+            if ((aux->filhoEsquerda == nullptr) && (aux->filhoDireita == nullptr))
+            {
+                if (auxPai->filhoEsquerda == aux)
+                {
+                    auxPai->filhoEsquerda = nullptr;
+                }
+                else
+                {
+                    auxPai->filhoDireita = nullptr;
+                }
+                delete aux;
+                return;
+            }
+
+            // remocao no caso tem somente filho a esquerda
+            if ((aux->filhoEsquerda != nullptr) && (aux->filhoDireita == nullptr))
+            {
+                if (auxPai->filhoEsquerda == aux)
+                {
+                    auxPai->filhoEsquerda = aux->filhoEsquerda;
+                }
+                else
+                {
+                    auxPai->filhoDireita = aux->filhoDireita;
+                }
+                delete aux;
+                return;
+            }
+
+            // remocao no caso tem somente filho a direita
+            if ((aux->filhoDireita != nullptr))
+            {
+            }
+        }
         return;
     }
 
-    /** esta correto a declaração da função T?
+    /** 
      *  @brief funcao auxiliar para retornar a chave do filho desejado
      *  @return caso filho = 0 retorna chave do filho da esquerda
      *  @return caso filho = 1 retorna chave do filho da direita
      */
-    T chaveFilho(Nodo<T> *aux, int filho)
-    {
+    std::optional<T> chaveFilho(Nodo<T> *aux, int filho) const
+    { // verificar se o filho nao é nulo caso sim retorn nullopt
         // filho da esquerda
         if (filho == 0)
         {
@@ -278,7 +332,7 @@ public:
                 aux = aux->filhoDireita;
             }
         }
-        return nullptr;
+        return std::nullopt;
     }
 
     /**
@@ -309,7 +363,7 @@ public:
                 aux = aux->filhoDireita;
             }
         }
-        return nullptr;
+        return std::nullopt;
     }
 
     /**
@@ -327,9 +381,10 @@ public:
             lista->adicionaNoFim(this->_raiz->chave);
             emOrdem_aux(aux->filhoDireita, lista);
         }
+        return lista;
     }
 
-    void emOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l)
+    void emOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l) const
     {
         if (aux != nullptr)
         {
@@ -354,9 +409,10 @@ public:
             preOrdem_aux(aux->filhoEsquerda, lista);
             preOrdem_aux(aux->filhoDireita, lista);
         }
+        return lista;
     }
 
-    void preOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l)
+    void preOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l) const
     {
         if (aux != nullptr)
         {
@@ -379,11 +435,12 @@ public:
         {
             posOrdem_aux(aux->filhoEsquerda, lista);
             posOrdem_aux(aux->filhoDireita, lista);
-            adicionaNoFim(this->_raiz->chave);
+            lista->adicionaNoFim(this->_raiz->chave);
         }
+        return lista;
     }
 
-    void posOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l)
+    void posOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l) const
     {
         if (aux != nullptr)
         {
