@@ -4,6 +4,11 @@
 #include "ArvoreDeBuscaBinaria.hpp"
 
 /**
+ * Possiveis inclusoes futuras:
+ * - Criar funcao para encontrar uma chave dada
+ */
+
+/**
  * @brief Representa uma árvore binária de busca.
  * 
  * @tparam T O tipo de dado guardado na árvore.
@@ -15,14 +20,42 @@ private:
     int quantidadeChaves;
 
 public:
+    // construtor da arvore, inicializa uma arvore vazia
     ArvoreDeBuscaBinaria()
     {
         this->_raiz = nullptr;
         this->quantidadeChaves = 0;
     }
 
-    // percorrer toda a árvore para eliminar nodo por nodo (usar delete?)
-    virtual ~ArvoreDeBuscaBinaria() {}
+    // destrutor que percorre toda a árvore para eliminar nodo por nodo (usar delete?)
+    virtual ~ArvoreDeBuscaBinaria()
+    {
+        Nodo<T> *aux = this->_raiz;
+
+        if (this->_raiz != nullptr)
+        {
+            deletaEmOrdem(aux->filhoEsquerda);
+            deletaEmOrdem(aux->filhoDireita);
+            delete aux;
+        }
+    }
+
+    /**
+     * @brief Auxiliar da destrutora para ser chamada recursivamente
+     * @param aux nodo a ser destruido
+     */
+    void deletaEmOrdem(Nodo<T> *aux)
+    {
+        Nodo<T> *auxPai = aux;
+
+        if (aux != nullptr)
+        {
+            deletaEmOrdem(aux->filhoEsquerda);
+            auxPai = aux;
+            delete aux;
+            deletaEmOrdem(auxPai->filhoDireita);
+        }
+    }
 
     /**
      * @brief Verifica se a arvore esta vazia
@@ -46,14 +79,7 @@ public:
      */
     virtual int quantidade() const
     {
-        if (vazia())
-        {
-            return 0;
-        }
-        else
-        {
-            return this->quantidadeChaves;
-        }
+        return this->quantidadeChaves;
     }
 
     /**
@@ -73,13 +99,13 @@ public:
                 return true;
             }
 
-            // se a chave for menor
+            // se a chave for menor pega a subarvore da esquerda
             if (chave < aux->chave)
             {
                 aux = aux->filhoEsquerda;
             }
 
-            // se a chave for maior
+            // se a chave for maior pega a subarvore da direita
             if (chave > aux->chave)
             {
                 aux = aux->filhoDireita;
@@ -93,6 +119,7 @@ public:
      * @param chave chave que é raiz da (sub)arvore cuja altura queremos. Se chave é nula, retorna a altura da arvore.
      * @return Numero inteiro representando a altura da (subarvore). Se chave nao esta na arvore, retorna std::nullopt
      */
+    // o que eh esse optional?
     virtual std::optional<int> altura(T chave) const
     {
 
@@ -106,18 +133,19 @@ public:
                 return aux->altura;
             }
 
-            // se a chave for menor
+            // se a chave for menor pega a subarvore da esquerda
             if (chave < aux->chave)
             {
                 aux = aux->filhoEsquerda;
             }
 
-            // se a chave for maior
+            // se a chave for maior pega a subarvore da direita
             if (chave > aux->chave)
             {
                 aux = aux->filhoDireita;
             }
         }
+        // esse retorno ta certo?
         return std::nullopt;
     }
 
@@ -129,7 +157,7 @@ public:
     {
 
         // insere na raiz
-        if (_raiz == nullptr)
+        if (this->_raiz == nullptr)
         {
             Nodo<T> *novo = new Nodo<T>; //Esta certo ??
             novo->chave = chave;
@@ -137,9 +165,12 @@ public:
             novo->filhoDireita = nullptr;
             novo->altura = 0;
             this->quantidadeChaves++;
-            return novo;
+            this->_raiz = novo;
+            return;
         }
         // insere no restante da arvore
+        // e no caso que a chave for igual uma existente?
+        // como calcular a altura?
         else
         {
             Nodo<T> *auxPai = this->_raiz;
@@ -147,12 +178,15 @@ public:
             int altura = 0;
 
             // setando qual subárvore vai começar o aux
-            // como tratar o caso de ter a mesma chave?
-            // como calcular a altura?
             if (chave < auxPai->chave)
+            {
                 aux = auxPai->filhoEsquerda;
+            }
             if (chave > auxPai->chave)
+            {
                 aux = auxPai->filhoDireita;
+            }
+            altura++;
 
             // localiza o lugar que será adicionado
             while (aux != nullptr)
@@ -162,6 +196,7 @@ public:
                     aux = aux->filhoEsquerda;
                 if (chave > aux->chave)
                     aux = aux->filhoDireita;
+                altura++;
             }
 
             // criacao do novo nodo
@@ -169,14 +204,20 @@ public:
             novo->chave = chave;
             novo->filhoEsquerda = nullptr;
             novo->filhoDireita = nullptr;
+            novo->altura = altura;
 
-            // seta o novo no na subarvore adequada
+            // seta o novo nodo na subarvore adequada
             if (chave < auxPai->chave)
+            {
                 auxPai->filhoEsquerda = novo;
+            }
             if (chave > auxPai->chave)
+            {
                 auxPai->filhoDireita = novo;
+            }
             this->quantidadeChaves++;
         }
+        return;
     }
 
     /**
@@ -186,9 +227,14 @@ public:
      */
     virtual void remover(T chave)
     {
+        return;
     }
 
-    // esta correto a declaração da função T?
+    /** esta correto a declaração da função T?
+     *  @brief funcao auxiliar para retornar a chave do filho desejado
+     *  @return caso filho = 0 retorna chave do filho da esquerda
+     *  @return caso filho = 1 retorna chave do filho da direita
+     */
     T chaveFilho(Nodo<T> *aux, int filho)
     {
         // filho da esquerda
@@ -273,7 +319,7 @@ public:
     virtual ListaEncadeadaAbstrata<T> *emOrdem() const
     {
         ListaEncadeadaAbstrata<T> *lista = new MinhaListaEncadeada<T>;
-        Nodo *aux = this->_raiz;
+        Nodo<T> *aux = this->_raiz;
 
         if (this->_raiz != nullptr)
         {
@@ -327,7 +373,7 @@ public:
     virtual ListaEncadeadaAbstrata<T> *posOrdem() const
     {
         ListaEncadeadaAbstrata<T> *lista = new MinhaListaEncadeada<T>;
-        Nodo *aux = this->_raiz;
+        Nodo<T> *aux = this->_raiz;
 
         if (this->_raiz != nullptr)
         {
