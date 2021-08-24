@@ -136,12 +136,46 @@ public:
             novo->filhoEsquerda = nullptr;
             novo->filhoDireita = nullptr;
             novo->altura = 0;
+            this->quantidadeChaves++;
             return novo;
         }
         // insere no restante da arvore
         else
         {
-            if ()
+            Nodo<T> *auxPai = this->_raiz;
+            Nodo<T> *aux;
+            int altura = 0;
+
+            // setando qual subárvore vai começar o aux
+            // como tratar o caso de ter a mesma chave?
+            // como calcular a altura?
+            if (chave < auxPai->chave)
+                aux = auxPai->filhoEsquerda;
+            if (chave > auxPai->chave)
+                aux = auxPai->filhoDireita;
+
+            // localiza o lugar que será adicionado
+            while (aux != nullptr)
+            {
+                auxPai = aux;
+                if (chave < aux->chave)
+                    aux = aux->filhoEsquerda;
+                if (chave > aux->chave)
+                    aux = aux->filhoDireita;
+            }
+
+            // criacao do novo nodo
+            Nodo<T> *novo = new Nodo<T>;
+            novo->chave = chave;
+            novo->filhoEsquerda = nullptr;
+            novo->filhoDireita = nullptr;
+
+            // seta o novo no na subarvore adequada
+            if (chave < auxPai->chave)
+                auxPai->filhoEsquerda = novo;
+            if (chave > auxPai->chave)
+                auxPai->filhoDireita = novo;
+            this->quantidadeChaves++;
         }
     }
 
@@ -154,6 +188,22 @@ public:
     {
     }
 
+    // esta correto a declaração da função T?
+    T chaveFilho(Nodo<T> *aux, int filho)
+    {
+        // filho da esquerda
+        if (filho == 0)
+        {
+            return aux->filhoEsquerda->chave;
+        }
+
+        // filho da direita
+        if (filho == 1)
+        {
+            return aux->filhoDireita->chave;
+        }
+    }
+
     /**
      * @brief Busca a chave do filho a esquerda de uma (sub)arvore
      * @param chave chave da arvore que eh pai do filho a esquerda
@@ -161,6 +211,28 @@ public:
      */
     virtual std::optional<T> filhoEsquerdaDe(T chave) const
     {
+        Nodo<T> *aux = this->_raiz;
+
+        while (aux != nullptr)
+        {
+            if (chave == aux->chave)
+            {
+                return chaveFilho(aux, 0); // essa chamada de função esta certo? no return?
+            }
+
+            // se a chave for menor
+            if (chave < aux->chave)
+            {
+                aux = aux->filhoEsquerda;
+            }
+
+            // se a chave for maior
+            if (chave > aux->chave)
+            {
+                aux = aux->filhoDireita;
+            }
+        }
+        return nullptr;
     }
 
     /**
@@ -170,6 +242,28 @@ public:
      */
     virtual std::optional<T> filhoDireitaDe(T chave) const
     {
+        Nodo<T> *aux = this->_raiz;
+
+        while (aux != nullptr)
+        {
+            if (chave == aux->chave)
+            {
+                return chaveFilho(aux, 1); // essa chamada de função esta certo? no return?
+            }
+
+            // se a chave for menor
+            if (chave < aux->chave)
+            {
+                aux = aux->filhoEsquerda;
+            }
+
+            // se a chave for maior
+            if (chave > aux->chave)
+            {
+                aux = aux->filhoDireita;
+            }
+        }
+        return nullptr;
     }
 
     /**
@@ -183,9 +277,19 @@ public:
 
         if (this->_raiz != nullptr)
         {
-            emOrder_aux(aux->filhoEsquerda, lista);
-            adicionaNoFim(this->_raiz->chave);
-            emOrder_aux(aux->filhoDireita, lista);
+            emOrdem_aux(aux->filhoEsquerda, lista);
+            lista->adicionaNoFim(this->_raiz->chave);
+            emOrdem_aux(aux->filhoDireita, lista);
+        }
+    }
+
+    void emOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l)
+    {
+        if (aux != nullptr)
+        {
+            emOrdem_aux(aux->filhoEsquerda, l);
+            l->adicionaNoFim(aux->chave);
+            emOrdem_aux(aux->filhoDireita, l);
         }
     }
 
@@ -200,9 +304,7 @@ public:
 
         if (this->_raiz != nullptr)
         {
-            // esta mesmo chamando a função??
             lista->adicionaNoFim(aux->chave);
-            // como declarar nova função??
             preOrdem_aux(aux->filhoEsquerda, lista);
             preOrdem_aux(aux->filhoDireita, lista);
         }
@@ -210,16 +312,12 @@ public:
 
     void preOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l)
     {
-        if (aux->filhoEsquerda == nullptr)
+        if (aux != nullptr)
         {
-            l->adicionaNoFim(aux->chave)
-        }
-        else
-        {
+            l->adicionaNoFim(aux->chave);
             preOrdem_aux(aux->filhoEsquerda, l);
+            preOrdem_aux(aux->filhoDireita, l);
         }
-
-        return
     }
 
     /**
@@ -236,6 +334,16 @@ public:
             posOrdem_aux(aux->filhoEsquerda, lista);
             posOrdem_aux(aux->filhoDireita, lista);
             adicionaNoFim(this->_raiz->chave);
+        }
+    }
+
+    void posOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l)
+    {
+        if (aux != nullptr)
+        {
+            preOrdem_aux(aux->filhoEsquerda, l);
+            preOrdem_aux(aux->filhoDireita, l);
+            l->adicionaNoFim(aux->chave);
         }
     }
 };
