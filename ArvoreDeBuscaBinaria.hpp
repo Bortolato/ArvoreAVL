@@ -96,11 +96,11 @@ public:
 };
 
 template <typename T>
-ArvoreDeBuscaBinaria<T>::ArvoreDeBuscaBinaria() : _raiz{}
+ArvoreDeBuscaBinaria<T>::ArvoreDeBuscaBinaria() : _raiz{} // instancia _raiz com nullptr. Equivalente a _raiz{nullptr}
 {
 }
 
 template <typename T>
-ArvoreDeBuscaBinaria<T>::~ArvoreDeBuscaBinaria() = default;
+ArvoreDeBuscaBinaria<T>::~ArvoreDeBuscaBinaria() = default; //atribui destrutor padrao do C++.
 
 #endif

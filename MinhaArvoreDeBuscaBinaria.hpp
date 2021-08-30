@@ -1,14 +1,9 @@
-#ifndef MINHA_ARVORE_DE_BUSCA_BINARIA_HPP
-#define MINHA_ARVORE_DE_BUSCA_BINARIA_HPP
+#ifndef MINHAARVOREDEBUSCABINARIA_HPP
+#define MINHAARVOREDEBUSCABINARIA_HPP
 
 #include "ArvoreDeBuscaBinaria.hpp"
-
-/**
- * Possiveis inclusoes futuras:
- * - Criar funcao para encontrar uma chave dada
- * - Lembrar de colocar as funções auxiliares encapsuladas
- */
-
+#include <cassert>
+#include <utility>
 /**
  * @brief Representa uma árvore binária de busca.
  * 
@@ -17,8 +12,165 @@
 template <typename T>
 class MinhaArvoreDeBuscaBinaria : public ArvoreDeBuscaBinaria<T>
 {
+protected:
+    int quantidadeChaves{0};
+
 private:
-    int quantidadeChaves;
+    /**
+     * @brief Auxiliar da destrutora para ser chamada recursivamente
+     * @param aux nodo a ser destruido
+     */
+    void deletaEmOrdem(Nodo<T> *aux)
+    {
+        if (aux != nullptr)
+        {
+            if (aux->filhoEsquerda != nullptr)
+            {
+                deletaEmOrdem(aux->filhoEsquerda);
+            }
+            if (aux->filhoDireita != nullptr)
+            {
+                deletaEmOrdem(aux->filhoDireita);
+            }
+            delete aux;
+        }
+    }
+
+    // como fazer com a altura??
+    int inserirAux(Nodo<T> *aux, Nodo<T> *auxPai, T chave)
+    {
+        if (aux != nullptr)
+        {
+            if (chave < aux->chave)
+            {
+                aux->altura = inserirAux(aux->filhoEsquerda, aux, chave) + 1;
+                return aux->altura;
+            }
+            else
+            {
+                aux->altura = inserirAux(aux->filhoDireita, aux, chave) + 1;
+                return aux->altura;
+            }
+        }
+        else
+        {
+            Nodo<T> *novo = new Nodo<T>;
+            novo->chave = chave;
+            this->quantidadeChaves++;
+
+            if (chave < auxPai->chave)
+            {
+                auxPai->filhoEsquerda = novo;
+            }
+            else
+            {
+                auxPai->filhoDireita = novo;
+            }
+            return 0;
+        }
+        return 0;
+    }
+
+    void atualizaAltura(Nodo<T> *aux, T chave)
+    {
+
+        int contador = 0;
+        Nodo<T> *aux2 = aux;
+
+        while (chave != aux->chave)
+        {
+            contador++;
+            if (chave < aux->chave)
+            {
+                aux = aux->filhoEsquerda;
+            }
+            else
+            {
+                aux = aux->filhoDireita;
+            }
+        }
+
+        while (aux2 != aux)
+        {
+            if (aux2->altura < contador)
+            {
+                aux2->altura = contador;
+            }
+
+            contador--;
+
+            if (chave < aux2->chave)
+            {
+                aux2 = aux2->filhoEsquerda;
+            }
+            else
+            {
+                aux2 = aux2->filhoDireita;
+            }
+        }
+        return;
+    }
+
+    /** 
+     *  @brief funcao auxiliar para retornar a chave do filho desejado
+     *  @return caso filho = 0 retorna chave do filho da esquerda
+     *  @return caso filho = 1 retorna chave do filho da direita
+     */
+    std::optional<T> chaveFilho(Nodo<T> *aux, int filho) const
+    { // verificar se o filho nao é nulo caso sim retorn nullopt
+        // filho da esquerda
+        if (filho == 0)
+        {
+            if (aux->filhoEsquerda != nullptr)
+            {
+                return aux->filhoEsquerda->chave;
+            }
+        }
+
+        // filho da direita
+        if (filho == 1)
+        {
+            if (aux->filhoDireita != nullptr)
+            {
+                return aux->filhoDireita->chave;
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    void preOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l) const
+    {
+        if (aux)
+        {
+            l->adicionaNoFim(aux->chave);
+            preOrdem_aux(aux->filhoEsquerda, l);
+            preOrdem_aux(aux->filhoDireita, l);
+        }
+        return;
+    }
+
+    void emOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l) const
+    {
+        if (aux != nullptr)
+        {
+            emOrdem_aux(aux->filhoEsquerda, l);
+            l->adicionaNoFim(aux->chave);
+            emOrdem_aux(aux->filhoDireita, l);
+        }
+        return;
+    }
+
+    void posOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l) const
+    {
+        if (aux != nullptr)
+        {
+            preOrdem_aux(aux->filhoEsquerda, l);
+            preOrdem_aux(aux->filhoDireita, l);
+            l->adicionaNoFim(aux->chave);
+        }
+        return;
+    }
 
 public:
     // construtor da arvore, inicializa uma arvore vazia
@@ -34,22 +186,14 @@ public:
 
         if (this->_raiz != nullptr)
         {
-            deletaEmOrdem(aux->filhoEsquerda);
-            deletaEmOrdem(aux->filhoDireita);
-            delete aux;
-        }
-    }
-
-    /**
-     * @brief Auxiliar da destrutora para ser chamada recursivamente
-     * @param aux nodo a ser destruido
-     */
-    void deletaEmOrdem(Nodo<T> *aux)
-    {
-        if (aux != nullptr)
-        {
-            deletaEmOrdem(aux->filhoEsquerda);
-            deletaEmOrdem(aux->filhoDireita);
+            if (aux->filhoEsquerda != nullptr)
+            {
+                deletaEmOrdem(aux->filhoEsquerda);
+            }
+            if (aux->filhoDireita != nullptr)
+            {
+                deletaEmOrdem(aux->filhoDireita);
+            }
             delete aux;
         }
     }
@@ -86,6 +230,10 @@ public:
      */
     virtual bool contem(T chave) const
     {
+        if (this->_raiz == nullptr)
+        {
+            return false;
+        }
 
         Nodo<T> *aux = this->_raiz;
 
@@ -96,14 +244,11 @@ public:
                 return true;
             }
 
-            // se a chave for menor pega a subarvore da esquerda
             if (chave < aux->chave)
             {
                 aux = aux->filhoEsquerda;
             }
-
-            // se a chave for maior pega a subarvore da direita
-            if (chave > aux->chave)
+            else
             {
                 aux = aux->filhoDireita;
             }
@@ -129,14 +274,11 @@ public:
                 return aux->altura;
             }
 
-            // se a chave for menor pega a subarvore da esquerda
             if (chave < aux->chave)
             {
                 aux = aux->filhoEsquerda;
             }
-
-            // se a chave for maior pega a subarvore da direita
-            if (chave > aux->chave)
+            else
             {
                 aux = aux->filhoDireita;
             }
@@ -156,61 +298,16 @@ public:
         {
             Nodo<T> *novo = new Nodo<T>;
             novo->chave = chave;
-            novo->filhoEsquerda = nullptr;
-            novo->filhoDireita = nullptr;
-            novo->altura = 0;
             this->quantidadeChaves++;
             this->_raiz = novo;
             return;
         }
+
         // insere no restante da arvore
-        // e no caso que a chave for igual uma existente?
-        // verificar qual a condição caso chave existente
         else
         {
-            Nodo<T> *auxPai = this->_raiz;
-            Nodo<T> *aux;
-            int altura = 0;
-
-            // setando qual subárvore vai começar o aux
-            if (chave < auxPai->chave)
-            {
-                aux = auxPai->filhoEsquerda;
-            }
-            if (chave >= auxPai->chave)
-            {
-                aux = auxPai->filhoDireita;
-            }
-            altura++;
-
-            // localiza o lugar que será adicionado
-            while (aux != nullptr)
-            {
-                auxPai = aux;
-                if (chave <= aux->chave)
-                    aux = aux->filhoEsquerda;
-                if (chave > aux->chave)
-                    aux = aux->filhoDireita;
-                altura++;
-            }
-
-            // criacao do novo nodo
-            Nodo<T> *novo = new Nodo<T>;
-            novo->chave = chave;
-            novo->filhoEsquerda = nullptr;
-            novo->filhoDireita = nullptr;
-            novo->altura = altura;
-
-            // seta o novo nodo na subarvore adequada
-            if (chave < auxPai->chave)
-            {
-                auxPai->filhoEsquerda = novo;
-            }
-            if (chave > auxPai->chave)
-            {
-                auxPai->filhoDireita = novo;
-            }
-            this->quantidadeChaves++;
+            this->_raiz->altura = inserirAux(this->_raiz, this->_raiz, chave);
+            //atualizaAltura(this->_raiz, chave);
         }
         return;
     }
@@ -218,7 +315,6 @@ public:
     /**
      * @brief Remove uma chave da arvore
      * @param chave chave a removida
-     * @return Retorna a chave removida ou nullptr se a chave nao esta na arvore
      */
     virtual void remover(T chave)
     {
@@ -231,7 +327,74 @@ public:
             Nodo<T> *auxPai = nullptr;
             Nodo<T> *aux = this->_raiz;
 
-            // precisa fazer o caso do nodo ser a raiz
+            // caso do nodo ser a raiz
+            if (aux->chave == chave)
+            {
+                if ((aux->filhoEsquerda == nullptr) && (aux->filhoDireita == nullptr))
+                {
+                    this->quantidadeChaves--;
+                    this->_raiz = nullptr;
+                    delete aux;
+                    return;
+                }
+                else if (aux->filhoDireita != nullptr)
+                {
+                    aux = aux->filhoDireita;
+                    auxPai = aux;
+                    while (aux->filhoEsquerda != nullptr)
+                    {
+                        auxPai = aux;
+                        aux = aux->filhoEsquerda;
+                    }
+                    if (aux == auxPai)
+                    {
+                        auxPai->filhoEsquerda = this->_raiz->filhoEsquerda;
+                        aux = this->_raiz;
+                        delete aux;
+                        this->_raiz = auxPai;
+                        this->quantidadeChaves--;
+                        return;
+                    }
+                    else
+                    {
+                        this->_raiz->chave = aux->chave;
+                        auxPai->filhoEsquerda = nullptr;
+                        delete aux;
+                        this->quantidadeChaves--;
+                        return;
+                    }
+                }
+                else if (aux->filhoEsquerda != nullptr)
+                {
+                    aux = aux->filhoEsquerda;
+                    auxPai = aux;
+                    while (aux->filhoDireita != nullptr)
+                    {
+                        auxPai = aux;
+                        aux = aux->filhoDireita;
+                    }
+                    if (aux == auxPai)
+                    {
+                        auxPai->filhoDireita = this->_raiz->filhoDireita;
+                        aux = this->_raiz;
+                        delete aux;
+                        this->_raiz = auxPai;
+                        this->quantidadeChaves--;
+                        return;
+                    }
+                    else
+                    {
+                        this->_raiz->chave = aux->chave;
+                        auxPai->filhoDireita = nullptr;
+                        delete aux;
+                        this->quantidadeChaves--;
+                        return;
+                    }
+                }
+                return;
+            }
+            auxPai = nullptr;
+            aux = this->_raiz;
             // encontra qual o nodo a ser removido e seu pai
             while (aux->chave != chave)
             {
@@ -240,7 +403,7 @@ public:
                 {
                     aux = aux->filhoEsquerda;
                 }
-                if (chave > aux->chave)
+                else
                 {
                     aux = aux->filhoDireita;
                 }
@@ -257,12 +420,29 @@ public:
                 {
                     auxPai->filhoDireita = nullptr;
                 }
+                this->quantidadeChaves--;
+                delete aux;
+                return;
+            }
+
+            // remocao no caso tem somente filho a direita
+            else if ((aux->filhoDireita != nullptr) && (aux->filhoEsquerda == nullptr))
+            {
+                if (auxPai->filhoEsquerda == aux)
+                {
+                    auxPai->filhoEsquerda = aux->filhoDireita;
+                }
+                else
+                {
+                    auxPai->filhoDireita = aux->filhoDireita;
+                }
+                this->quantidadeChaves--;
                 delete aux;
                 return;
             }
 
             // remocao no caso tem somente filho a esquerda
-            if ((aux->filhoEsquerda != nullptr) && (aux->filhoDireita == nullptr))
+            else if ((aux->filhoEsquerda != nullptr) && (aux->filhoDireita == nullptr))
             {
                 if (auxPai->filhoEsquerda == aux)
                 {
@@ -270,38 +450,29 @@ public:
                 }
                 else
                 {
-                    auxPai->filhoDireita = aux->filhoDireita;
+                    auxPai->filhoDireita = aux->filhoEsquerda;
                 }
+                this->quantidadeChaves--;
                 delete aux;
                 return;
             }
-
-            // remocao no caso tem somente filho a direita
-            if ((aux->filhoDireita != nullptr))
+            else if ((aux->filhoEsquerda != nullptr) && (aux->filhoDireita != nullptr))
             {
+                if (auxPai->filhoEsquerda == aux)
+                {
+                    auxPai->filhoEsquerda = aux->filhoDireita;
+                }
+                else
+                {
+                    auxPai->filhoDireita = aux->filhoDireita;
+                }
+                aux->filhoDireita->filhoEsquerda = aux->filhoEsquerda;
+                this->quantidadeChaves--;
+                delete aux;
+                return;
             }
         }
         return;
-    }
-
-    /** 
-     *  @brief funcao auxiliar para retornar a chave do filho desejado
-     *  @return caso filho = 0 retorna chave do filho da esquerda
-     *  @return caso filho = 1 retorna chave do filho da direita
-     */
-    std::optional<T> chaveFilho(Nodo<T> *aux, int filho) const
-    { // verificar se o filho nao é nulo caso sim retorn nullopt
-        // filho da esquerda
-        if (filho == 0)
-        {
-            return aux->filhoEsquerda->chave;
-        }
-
-        // filho da direita
-        if (filho == 1)
-        {
-            return aux->filhoDireita->chave;
-        }
     }
 
     /**
@@ -317,17 +488,14 @@ public:
         {
             if (chave == aux->chave)
             {
-                return chaveFilho(aux, 0); // essa chamada de função esta certo? no return?
+                return chaveFilho(aux, 0);
             }
 
-            // se a chave for menor
             if (chave < aux->chave)
             {
                 aux = aux->filhoEsquerda;
             }
-
-            // se a chave for maior
-            if (chave > aux->chave)
+            else
             {
                 aux = aux->filhoDireita;
             }
@@ -348,22 +516,37 @@ public:
         {
             if (chave == aux->chave)
             {
-                return chaveFilho(aux, 1); // essa chamada de função esta certo? no return?
+                return chaveFilho(aux, 1);
             }
 
-            // se a chave for menor
             if (chave < aux->chave)
             {
                 aux = aux->filhoEsquerda;
             }
-
-            // se a chave for maior
-            if (chave > aux->chave)
+            else
             {
                 aux = aux->filhoDireita;
             }
         }
         return std::nullopt;
+    }
+
+    /**
+     * @brief Lista chaves visitando a arvore em pre-ordem
+     * @return Lista encadeada contendo as chaves em pre-ordem. 
+     */
+    virtual ListaEncadeadaAbstrata<T> *preOrdem() const
+    {
+        ListaEncadeadaAbstrata<T> *lista = new MinhaListaEncadeada<T>;
+        Nodo<T> *aux = ArvoreDeBuscaBinaria<T>::_raiz;
+
+        if (ArvoreDeBuscaBinaria<T>::_raiz != nullptr)
+        {
+            lista->adicionaNoFim(aux->chave);
+            preOrdem_aux(aux->filhoEsquerda, lista);
+            preOrdem_aux(aux->filhoDireita, lista);
+        }
+        return lista;
     }
 
     /**
@@ -384,44 +567,6 @@ public:
         return lista;
     }
 
-    void emOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l) const
-    {
-        if (aux != nullptr)
-        {
-            emOrdem_aux(aux->filhoEsquerda, l);
-            l->adicionaNoFim(aux->chave);
-            emOrdem_aux(aux->filhoDireita, l);
-        }
-    }
-
-    /**
-     * @brief Lista chaves visitando a arvore em pre-ordem
-     * @return Lista encadeada contendo as chaves em pre-ordem. 
-     */
-    virtual ListaEncadeadaAbstrata<T> *preOrdem() const
-    {
-        ListaEncadeadaAbstrata<T> *lista = new MinhaListaEncadeada<T>;
-        Nodo<T> *aux = this->_raiz;
-
-        if (this->_raiz != nullptr)
-        {
-            lista->adicionaNoFim(aux->chave);
-            preOrdem_aux(aux->filhoEsquerda, lista);
-            preOrdem_aux(aux->filhoDireita, lista);
-        }
-        return lista;
-    }
-
-    void preOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l) const
-    {
-        if (aux != nullptr)
-        {
-            l->adicionaNoFim(aux->chave);
-            preOrdem_aux(aux->filhoEsquerda, l);
-            preOrdem_aux(aux->filhoDireita, l);
-        }
-    }
-
     /**
      * @brief Lista chaves visitando a arvore em pos-ordem
      * @return Lista encadeada contendo as chaves em pos ordem. 
@@ -438,16 +583,6 @@ public:
             lista->adicionaNoFim(this->_raiz->chave);
         }
         return lista;
-    }
-
-    void posOrdem_aux(Nodo<T> *aux, ListaEncadeadaAbstrata<T> *l) const
-    {
-        if (aux != nullptr)
-        {
-            preOrdem_aux(aux->filhoEsquerda, l);
-            preOrdem_aux(aux->filhoDireita, l);
-            l->adicionaNoFim(aux->chave);
-        }
     }
 };
 

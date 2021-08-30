@@ -1,5 +1,5 @@
-#ifndef LISTAENCADEADAABSTRATA_HPP
-#define LISTAENCADEADAABSTRATA_HPP
+#ifndef LISTAENCADEADAABSTRATA_H
+#define LISTAENCADEADAABSTRATA_H
 
 #include <exception>
 #include <stdexcept>
